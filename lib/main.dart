@@ -44,6 +44,7 @@ class _PortfolioHomeState extends State<PortfolioHome>
 
   int activeIndex = 0; // 0 = Home, 1 = About
   bool showMore = false;
+  bool showPortfolioMore = false;
 
   @override
   void initState() {
@@ -104,7 +105,7 @@ class _PortfolioHomeState extends State<PortfolioHome>
     super.dispose();
   }
 
-  // MENU CLICK HANDLER (FIXED)
+  // MENU CLICK HANDLER
   void onMenuTap(int index) {
     setState(() => activeIndex = index);
 
@@ -142,51 +143,94 @@ class _PortfolioHomeState extends State<PortfolioHome>
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      appBar: MediaQuery.of(context).size.width < 800
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(70),
+              child: ResponsiveTopNav(
+                activeIndex: activeIndex,
+                onTap: onMenuTap,
+              ),
+            )
+          : null,
+
+      drawer: MediaQuery.of(context).size.width < 800
+          ? _MobileDrawer(onTap: onMenuTap)
+          : null,
+
       body: Column(
         children: [
-          _TopNav(activeIndex: activeIndex, onTap: onMenuTap),
+          if (MediaQuery.of(context).size.width >= 800)
+            ResponsiveTopNav(activeIndex: activeIndex, onTap: onMenuTap),
 
           Expanded(
             child: SingleChildScrollView(
               controller: scrollController,
-              child: Column(
-                children: [
-                  // HOME
-                  SizedBox(
-                    key: homeKey,
-                    height: size.height,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 80),
-                      child: Row(
-                        children: [
-                          Expanded(child: _HomeText(this)),
-                          Expanded(
-                            child: Center(
-                              child: Image.asset(
-                                'assets/home.jpg',
-                                height: 380,
-                              ),
-                            ),
-                          ),
-                        ],
+              child: SingleChildScrollView(
+                controller: scrollController,
+                child: Column(
+                  children: [
+                    // HOME
+                    SizedBox(
+                      key: homeKey,
+                      height: size.height,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: MediaQuery.of(context).size.width < 800
+                              ? 24
+                              : 80,
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isMobile = constraints.maxWidth < 800;
+
+                            return isMobile
+                                ? Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _HomeText(this),
+
+                                      const SizedBox(height: 30),
+
+                                      Image.asset(
+                                        'assets/home.jpg',
+                                        height: 260,
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    children: [
+                                      Expanded(child: _HomeText(this)),
+                                      Expanded(
+                                        child: Center(
+                                          child: Image.asset(
+                                            'assets/home.jpg',
+                                            height: 380,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                          },
+                        ),
                       ),
                     ),
-                  ),
 
-                  SizedBox(height: 100),
+                    SizedBox(height: 100),
 
-                  // ABOUT
-                  Container(
-                    key: aboutKey,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 80,
-                      vertical: 60,
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: AnimatedOpacity(
+                    // ABOUT
+                    Container(
+                      key: aboutKey,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: MediaQuery.of(context).size.width < 800
+                            ? 24
+                            : 80,
+                        vertical: 60,
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isMobile = constraints.maxWidth < 800;
+
+                          final imageWidget = AnimatedOpacity(
                             duration: const Duration(milliseconds: 600),
                             opacity: 1,
                             child: ClipRRect(
@@ -198,12 +242,12 @@ class _PortfolioHomeState extends State<PortfolioHome>
                                 fit: BoxFit.cover,
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 40),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          );
+
+                          final textWidget = Column(
+                            crossAxisAlignment: isMobile
+                                ? CrossAxisAlignment.center
+                                : CrossAxisAlignment.start,
                             children: [
                               RichText(
                                 text: const TextSpan(
@@ -223,65 +267,87 @@ class _PortfolioHomeState extends State<PortfolioHome>
                                   ],
                                 ),
                               ),
+
                               const SizedBox(height: 20),
+
                               Text(
                                 showMore
                                     ? 'I am a third-year Telecommunication and Network Engineering student at the Institute of Technology of Cambodia. I am hands-on experience in software development, telecommunication, and computer networks. Skilled in Python, Java, C programming, Flutter, and JavaFX, with practical experience building applications that implement scheduling algorithms, hybrid systems, and user-friendly interfaces. Passionate about problem-solving, learning new technologies, and contributing to innovative software and network solutions. Strong team player with experience in collaborative projects and project management.'
                                     : 'I am a third-year Telecommunication and Network Engineering student at the Institute of Technology of Cambodia. I am hands-on experience in software development,',
+                                textAlign: isMobile
+                                    ? TextAlign.center
+                                    : TextAlign.left,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   height: 1.6,
                                 ),
                               ),
+
                               const SizedBox(height: 20),
+
                               _HoverButton(
                                 text: showMore ? 'Show Less' : 'Show More',
                                 onTap: () =>
                                     setState(() => showMore = !showMore),
                               ),
                             ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                          );
 
-                  SizedBox(height: 250),
-
-                  // SKILLS
-                  Container(
-                    key: skillsKey,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 80,
-                      vertical: 60,
+                          return isMobile
+                              ? Column(
+                                  children: [
+                                    imageWidget,
+                                    const SizedBox(height: 30),
+                                    textWidget,
+                                  ],
+                                )
+                              : Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: imageWidget),
+                                    const SizedBox(width: 40),
+                                    Expanded(child: textWidget),
+                                  ],
+                                );
+                        },
+                      ),
                     ),
-                    width: double.infinity,
-                    child: Column(
-                      children: [
-                        RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                            children: [
-                              TextSpan(text: 'My '),
-                              TextSpan(
-                                text: 'Skills',
-                                style: TextStyle(color: Color(0xff00bcd4)),
+
+                    SizedBox(height: 250),
+
+                    // SKILLS
+                    Container(
+                      key: skillsKey,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 80,
+                        vertical: 60,
+                      ),
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          RichText(
+                            text: const TextSpan(
+                              style: TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-
-                        Column(
-                          children: [
-                            // FIRST ROW
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                TextSpan(text: 'My '),
+                                TextSpan(
+                                  text: 'Skills',
+                                  style: TextStyle(color: Color(0xff00bcd4)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isMobile = constraints.maxWidth < 800;
+
+                              final skillCards = [
                                 _SkillCard(
                                   title: 'Programming',
                                   image: 'assets/skills/programming.webp',
@@ -293,7 +359,6 @@ class _PortfolioHomeState extends State<PortfolioHome>
                                     'JavaScript',
                                   ],
                                 ),
-                                const SizedBox(width: 30),
                                 _SkillCard(
                                   title: 'Microcontroller',
                                   image: 'assets/skills/microcontroller.png',
@@ -303,211 +368,318 @@ class _PortfolioHomeState extends State<PortfolioHome>
                                     'Actuator Interfacing',
                                   ],
                                 ),
-                                const SizedBox(width: 30),
                                 _SkillCard(
                                   title: 'Tools',
                                   image: 'assets/skills/tools.png',
                                   items: const ['MATLAB', 'MS Office', 'Cisco'],
                                 ),
+                                _SkillCard(
+                                  title: 'Operating Systems',
+                                  image: 'assets/skills/os.png',
+                                  items: const ['Ubuntu'],
+                                ),
+                              ];
+
+                              // Show first 3 normally, last one when showMore is true
+                              final visibleCards = showMore
+                                  ? skillCards
+                                  : skillCards.take(2).toList();
+
+                              return isMobile
+                                  ? Column(
+                                      children: visibleCards
+                                          .map(
+                                            (card) => Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 20,
+                                              ),
+                                              child: card,
+                                            ),
+                                          )
+                                          .toList(),
+                                    )
+                                  : Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: visibleCards
+                                              .take(3)
+                                              .map(
+                                                (card) => Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 15,
+                                                      ),
+                                                  child: card,
+                                                ),
+                                              )
+                                              .toList(),
+                                        ),
+
+                                        if (showMore)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 30,
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [visibleCards.last],
+                                            ),
+                                          ),
+                                      ],
+                                    );
+                            },
+                          ),
+
+                          const SizedBox(height: 40),
+
+                          _HoverButton(
+                            text: showMore ? 'Show Less' : 'More',
+                            onTap: () => setState(() => showMore = !showMore),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 250),
+
+                    // PORTFOLIO
+                    Container(
+                      key: portfolioKey,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 80,
+                        vertical: 60,
+                      ),
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          RichText(
+                            text: const TextSpan(
+                              style: TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              children: [
+                                TextSpan(text: 'My '),
+                                TextSpan(
+                                  text: 'Portfolio',
+                                  style: TextStyle(color: Color(0xff00bcd4)),
+                                ),
                               ],
                             ),
+                          ),
 
-                            // SPACE BEFORE MORE
-                            const SizedBox(height: 30),
+                          const SizedBox(height: 50),
 
-                            // SECOND ROW (ONLY WHEN "MORE" IS CLICKED)
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 400),
-                              child: showMore
-                                  ? Row(
-                                      key: const ValueKey(1),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isMobile = constraints.maxWidth < 800;
+
+                              final portfolioCards = [
+                                _PortfolioCard(
+                                  title: 'Smart Home Arduino Project',
+                                  image: 'assets/portfolio/arduino.png',
+                                  description:
+                                      'A smart home is a house that uses internet-connected devices to automatically control and monitor systems such as lighting, security, temperature, and appliances. These devices can be controlled remotely using a smartphone or voice assistant. Smart homes improve convenience, security, and energy efficiency, making daily life more comfortable and safe.',
+                                ),
+                                _PortfolioCard(
+                                  title: 'Tic-Tac-Toe Game',
+                                  image: 'assets/portfolio/tic_tac_toe.png',
+                                  description:
+                                      'Tic Tac Toe is a simple two-player game played on a 3×3 grid. Players take turns marking a cell with X or O. The goal is to be the first to place three of your marks in a row—horizontally, vertically, or diagonally. The game ends when one player wins or when all cells are filled, resulting in a draw.',
+                                ),
+                              ];
+
+                              // Show first 1 normally, all when showPortfolioMore is true
+                              final visibleCards = showPortfolioMore
+                                  ? portfolioCards
+                                  : portfolioCards.take(1).toList();
+
+                              return isMobile
+                                  ? Column(
+                                      children: visibleCards
+                                          .map(
+                                            (card) => Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 24,
+                                              ),
+                                              child: card,
+                                            ),
+                                          )
+                                          .toList(),
+                                    )
+                                  : Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
-                                      children: [
-                                        _SkillCard(
-                                          title: 'Operating Systems',
-                                          image: 'assets/skills/os.png',
-                                          items: const ['Ubuntu'],
-                                        ),
-                                      ],
-                                    )
-                                  : const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        _HoverButton(
-                          text: showMore ? 'Show Less' : 'More',
-                          onTap: () => setState(() => showMore = !showMore),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: 250),
-
-                  // PORTFOLIO
-                  Container(
-                    key: portfolioKey,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 80,
-                      vertical: 60,
-                    ),
-                    width: double.infinity,
-                    child: Column(
-                      children: [
-                        RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                            children: [
-                              TextSpan(text: 'My '),
-                              TextSpan(
-                                text: 'Portfolio',
-                                style: TextStyle(color: Color(0xff00bcd4)),
-                              ),
-                            ],
+                                      children: visibleCards
+                                          .map(
+                                            (card) => Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 20,
+                                                  ),
+                                              child: card,
+                                            ),
+                                          )
+                                          .toList(),
+                                    );
+                            },
                           ),
-                        ),
+                          const SizedBox(height: 40),
 
-                        const SizedBox(height: 50),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _PortfolioCard(
-                              title: 'Smart Home Arduino Project',
-                              image: 'assets/portfolio/arduino.png',
-                              description:
-                                  'A smart home is a house that uses internet-connected devices to automatically control and monitor systems such as lighting, security, temperature, and appliances. These devices can be controlled remotely using a smartphone or voice assistant. Smart homes improve convenience, security, and energy efficiency, making daily life more comfortable and safe.',
+                          _HoverButton(
+                            text: showPortfolioMore ? 'Show Less' : 'More',
+                            onTap: () => setState(
+                              () => showPortfolioMore = !showPortfolioMore,
                             ),
-
-                            const SizedBox(width: 40),
-
-                            _PortfolioCard(
-                              title: 'Tic-Tac-Toe Game',
-                              image: 'assets/portfolio/tic_tac_toe.png',
-                              description:
-                                  'Tic Tac Toe is a simple two-player game played on a 3×3 grid. Players take turns marking a cell with X or O. The goal is to be the first to place three of your marks in a row—horizontally, vertically, or diagonally. The game ends when one player wins or when all cells are filled, resulting in a draw.',
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  SizedBox(height: 250),
+                    SizedBox(height: 250),
 
-                  // CONTACT
+                    // CONTACT
 
-                  // CONTACT (TITLE + SECTION SHARE THE SAME KEY)
-                  Container(
-                    key: contactKey,
-                    width: double.infinity,
-                    child: Column(
-                      children: [
-                        // TITLE (white background)
-                        RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                    // CONTACT (TITLE + SECTION SHARE THE SAME KEY)
+                    Container(
+                      key: contactKey,
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          // TITLE (white background)
+                          RichText(
+                            text: const TextSpan(
+                              style: TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              children: [
+                                TextSpan(text: 'My '),
+                                TextSpan(
+                                  text: 'Contact',
+                                  style: TextStyle(color: Color(0xff00bcd4)),
+                                ),
+                              ],
                             ),
-                            children: [
-                              TextSpan(text: 'My '),
-                              TextSpan(
-                                text: 'Contact',
-                                style: TextStyle(color: Color(0xff00bcd4)),
-                              ),
-                            ],
                           ),
-                        ),
 
-                        const SizedBox(height: 60),
+                          const SizedBox(height: 60),
 
-                        // BLUE CONTACT SECTION
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 80,
-                            vertical: 80,
+                          // BLUE CONTACT SECTION
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 80,
+                              vertical: 80,
+                            ),
+                            color: const Color(0xff00bcd4),
+                            child: Column(
+                              children: [
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final isMobile = constraints.maxWidth < 800;
+
+                                    if (isMobile) {
+                                      return Column(
+                                        children: [
+                                          _ContactCard(
+                                            icon: Icons.email,
+                                            title: 'Email',
+                                            subtitle: 'sreysocheataa@gmail.com',
+                                            url:
+                                                'https://mail.google.com/mail/u/1/#sent?compose=CllgCJvpbSxzLtzsQfPwrdlGLHNkpThHXJWQpzNnLVRgTCsjGjbSNSWNjbnkSrkcLhJzxvFlgtL',
+                                            width: double.infinity,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          _ContactCard(
+                                            icon: Icons.phone,
+                                            title: 'Phone',
+                                            subtitle: '+855 119 068 78',
+                                            url: 'tel:+85511906878',
+                                            width: double.infinity,
+                                          ),
+                                        ],
+                                      );
+                                    } else {
+                                      return Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          _ContactCard(
+                                            icon: Icons.email,
+                                            title: 'Email',
+                                            subtitle: 'sreysocheataa@gmail.com',
+                                            url:
+                                                'https://mail.google.com/mail/u/1/#sent?compose=CllgCJvpbSxzLtzsQfPwrdlGLHNkpThHXJWQpzNnLVRgTCsjGjbSNSWNjbnkSrkcLhJzxvFlgtL',
+                                          ),
+                                          const SizedBox(width: 30),
+                                          _ContactCard(
+                                            icon: Icons.phone,
+                                            title: 'Phone',
+                                            subtitle: '+855 119 068 78',
+                                            url: 'tel:+85511906878',
+                                          ),
+                                        ],
+                                      );
+                                    }
+                                  },
+                                ),
+
+                                const SizedBox(height: 30),
+
+                                // LOCATION (WIDER)
+                                _ContactCard(
+                                  width: MediaQuery.of(context).size.width < 800
+                                      ? double.infinity
+                                      : 520,
+                                  icon: Icons.location_on,
+                                  title: 'Location',
+                                  subtitle:
+                                      'Russian Federation Blvd (110), Phnom Penh 120404',
+                                  url:
+                                      'https://www.google.com/maps/search/?api=1&query=Russian+Federation+Blvd+110+Phnom+Penh',
+                                ),
+
+                                const SizedBox(height: 30),
+
+                                // SOCIAL ICONS BELOW LOCATION
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    _SocialIcon(
+                                      icon: Icons.facebook,
+                                      url:
+                                          'https://www.facebook.com/pey.chhouy.3',
+                                    ),
+                                    _SocialIcon(
+                                      icon: Icons.camera_alt, // Instagram
+                                      url:
+                                          'https://www.instagram.com/pey_chhouyyyyyy/',
+                                    ),
+                                    _SocialIcon(
+                                      icon: Icons.send, // Telegram
+                                      url:
+                                          'https://web.telegram.org/a/#1187896829',
+                                    ),
+                                    _SocialIcon(
+                                      icon: Icons.code, // GitHub
+                                      url: 'https://github.com/socheatasrey',
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                          color: const Color(0xff00bcd4),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _ContactCard(
-                                    icon: Icons.email,
-                                    title: 'Email',
-                                    subtitle: 'sreysocheataa@gmail.com',
-                                    url:
-                                        'https://mail.google.com/mail/u/1/#sent?compose=CllgCJvpbSxzLtzsQfPwrdlGLHNkpThHXJWQpzNnLVRgTCsjGjbSNSWNjbnkSrkcLhJzxvFlgtL',
-                                  ),
-                                  const SizedBox(width: 30),
-                                  _ContactCard(
-                                    icon: Icons.phone,
-                                    title: 'Phone',
-                                    subtitle: '+855 119 068 78',
-                                    url: 'tel:+85511906878',
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 30),
-
-                              // LOCATION (WIDER)
-                              _ContactCard(
-                                width: 520,
-                                icon: Icons.location_on,
-                                title: 'Location',
-                                subtitle:
-                                    'Russian Federation Blvd (110), Phnom Penh 120404',
-                                url:
-                                    'https://www.google.com/maps/search/?api=1&query=Russian+Federation+Blvd+110+Phnom+Penh',
-                              ),
-
-                              const SizedBox(height: 30),
-
-                              // SOCIAL ICONS BELOW LOCATION
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  _SocialIcon(
-                                    icon: Icons.facebook,
-                                    url:
-                                        'https://www.facebook.com/pey.chhouy.3',
-                                  ),
-                                  _SocialIcon(
-                                    icon: Icons.camera_alt, // Instagram
-                                    url:
-                                        'https://www.instagram.com/pey_chhouyyyyyy/',
-                                  ),
-                                  _SocialIcon(
-                                    icon: Icons.send, // Telegram
-                                    url:
-                                        'https://web.telegram.org/a/#1187896829',
-                                  ),
-                                  _SocialIcon(
-                                    icon: Icons.code, // GitHub
-                                    url: 'https://github.com/socheatasrey',
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -621,10 +793,57 @@ class _HomeText extends StatelessWidget {
 }
 
 // ---------------- NAVBAR ----------------
+class ResponsiveTopNav extends StatelessWidget {
+  final int activeIndex;
+  final ValueChanged<int> onTap;
+
+  const ResponsiveTopNav({
+    required this.activeIndex,
+    required this.onTap,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    // MOBILE VIEW
+    if (width < 800) {
+      return AppBar(
+        backgroundColor: Colors.white,
+        elevation: 2,
+        title: Row(
+          children: const [
+            Text(
+              'Srey',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              ' Socheata',
+              style: TextStyle(
+                color: Color(0xff00bcd4),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // DESKTOP VIEW (YOUR OLD NAVBAR)
+    return _TopNav(activeIndex: activeIndex, onTap: onTap);
+  }
+}
+
 class _TopNav extends StatefulWidget {
   final int activeIndex;
   final ValueChanged<int> onTap;
-  const _TopNav({required this.activeIndex, required this.onTap});
+
+  const _TopNav({required this.activeIndex, required this.onTap, Key? key})
+    : super(key: key);
 
   @override
   State<_TopNav> createState() => _TopNavState();
@@ -1032,6 +1251,49 @@ class _ContactCardState extends State<_ContactCard> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MobileDrawer extends StatelessWidget {
+  final ValueChanged<int> onTap;
+
+  const _MobileDrawer({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final menus = ['Home', 'About', 'Skills', 'Portfolio', 'Contact'];
+
+    return Drawer(
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            width: double.infinity,
+            color: const Color(0xff00bcd4),
+            child: const SafeArea(
+              child: Text(
+                'Menu',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+
+          ...List.generate(menus.length, (i) {
+            return ListTile(
+              title: Text(menus[i], style: const TextStyle(fontSize: 18)),
+              onTap: () {
+                Navigator.pop(context); // close drawer
+                onTap(i); // scroll to section
+              },
+            );
+          }),
+        ],
       ),
     );
   }
